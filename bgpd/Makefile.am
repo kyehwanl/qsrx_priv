@@ -1,11 +1,11 @@
 ## Process this file with automake to produce Makefile.in.
 
-INCLUDES = @INCLUDES@ -I.. -I$(top_srcdir) -I$(top_srcdir)/lib -I$(top_builddir)/lib $(BGPD_INCLUDES)
-DEFS = @DEFS@ -DSYSCONFDIR=\"$(sysconfdir)/\"
+INCLUDES = @INCLUDES@ -I.. -I$(top_srcdir) -I$(top_srcdir)/lib -I$(top_builddir)/lib $(BGPD_INCLUDES) -I/users/kyehwanl/Programming/time-measure/tm-library/tm_rdtsc
+DEFS = @DEFS@ -DSYSCONFDIR=\"$(sysconfdir)/\" -D__TIME_MEASURE__
 INSTALL_SDATA=@INSTALL@ -m 600
 
 AM_CFLAGS = $(PICFLAGS)
-AM_LDFLAGS = $(PILDFLAGS) -ldl
+AM_LDFLAGS = $(PILDFLAGS) -ldl -L/users/kyehwanl/Programming/time-measure/tm-library/tm_rdtsc -ltm_rdtsc -Wl,-rpath -Wl,/users/kyehwanl/Programming/time-measure/tm-library/tm_rdtsc/.libs
 
 noinst_LIBRARIES = libbgp.a
 sbin_PROGRAMS = bgpd
