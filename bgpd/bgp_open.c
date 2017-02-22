@@ -424,7 +424,9 @@ static const struct message capcode_str[] =
   { CAPABILITY_CODE_DYNAMIC,		"Dynamic"			},
   { CAPABILITY_CODE_REFRESH_OLD,	"Route Refresh (Old)"		},
   { CAPABILITY_CODE_ORF_OLD,		"ORF (Old)"			},
+#ifdef USE_SRX
   { CAPABILITY_CODE_EXTENDED,		"Extended Message Support"      },
+#endif
 };
 static const int capcode_str_max = array_size(capcode_str);
 
@@ -439,7 +441,9 @@ static const size_t cap_minsizes[] =
   [CAPABILITY_CODE_DYNAMIC]	= CAPABILITY_CODE_DYNAMIC_LEN,
   [CAPABILITY_CODE_REFRESH_OLD]	= CAPABILITY_CODE_REFRESH_LEN,
   [CAPABILITY_CODE_ORF_OLD]	= sizeof (struct capability_orf_entry),
+#ifdef USE_SRX
   [CAPABILITY_CODE_EXTENDED]    = CAPABILITY_CODE_EXTENDED_LEN,
+#endif
 };
 
 /**

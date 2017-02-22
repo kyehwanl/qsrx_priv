@@ -2692,6 +2692,7 @@ bgp_read (struct thread *thread)
 	}
 
 
+#ifdef USE_SRX
       bgp_size_t size_policy;
       if (CHECK_FLAG (peer->flags, PEER_FLAG_EXTENDED_MESSAGE_SUPPORT))
       {
@@ -2714,13 +2715,18 @@ bgp_read (struct thread *thread)
       }
       else
         size_policy = BGP_MAX_PACKET_SIZE;
+#endif
 
 
 
 
       /* Mimimum packet length check. */
       if ((size < BGP_HEADER_SIZE)
+#ifdef USE_SRX
 	  || (size > size_policy)
+#else
+	  || (size > BGP_MAX_PACKET_SIZE)
+#endif
 	  || (type == BGP_MSG_OPEN && size < BGP_MSG_OPEN_MIN_SIZE)
 	  || (type == BGP_MSG_UPDATE && size < BGP_MSG_UPDATE_MIN_SIZE)
 	  || (type == BGP_MSG_NOTIFY && size < BGP_MSG_NOTIFY_MIN_SIZE)

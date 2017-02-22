@@ -998,7 +998,9 @@ struct bgp_nlri
 #define BGP_MARKER_SIZE		                16
 #define BGP_HEADER_SIZE		                19
 #define BGP_MAX_PACKET_SIZE                   4096
+#ifdef USE_SRX
 #define BGP_MAX_PACKET_SIZE_EXTENDED         65535
+#endif
 
 /* BGP minimum message size.  */
 #define BGP_MSG_OPEN_MIN_SIZE                   (BGP_HEADER_SIZE + 10)

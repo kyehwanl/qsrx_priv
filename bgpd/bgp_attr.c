@@ -3065,7 +3065,11 @@ bgp_packet_attribute (struct bgp *bgp, struct peer *peer,
     stream_putc (s, BGP_ATTR_AS_PATH);
     aspath_sizep = stream_get_endp (s);
     stream_putw (s, 0);
+#ifdef USE_SRX
     stream_putw_at (s, aspath_sizep, aspath_put (s, aspath_bgpsec, use32bit));
+#else
+    stream_putw_at (s, aspath_sizep, aspath_put (s, aspath, use32bit));
+#endif
 
 #ifdef USE_SRX
   }
