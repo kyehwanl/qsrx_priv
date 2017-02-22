@@ -207,6 +207,14 @@ bgp_update_packet (struct peer *peer, afi_t afi, safi_t safi)
   unsigned long pos;
 #ifdef USE_SRX
   u_char bFrag =0;
+
+  // By default we assume the update will be send out using BGPSEC. the
+  // function bgp_packer_attribute will do the final decision and return
+  // the final result back. For now we assume we do BGPSEC and NOT AS_PATH
+
+  /* This value stay here, otherwise it will affect BGPv4 packing which
+   * is to put prefixes into the stream */
+  bool useASpath = false;
 #endif
 
   s = peer->work;
@@ -238,12 +246,6 @@ bgp_update_packet (struct peer *peer, afi_t afi, safi_t safi)
     if (STREAM_REMAIN (s) <= BGP_NLRI_LENGTH + PSIZE (rn->p.prefixlen))
 	    break;
 
-#ifdef USE_SRX
-    // By default we assume the update will be send out using BGPSEC. the
-    // function bgp_packer_attribute will do the final decision and return
-    // the final result back. For now we assume we do BGPSEC and NOT AS_PATH
-    bool useASpath = false;
-#endif
     /* If packet is empty, set attribute. */
     if (stream_empty (s))
 	  {

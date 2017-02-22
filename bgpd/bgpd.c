@@ -67,7 +67,7 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 #include "bgpd/bgp_validate.h"
 
 #if defined(__TIME_MEASURE__)
-#include "srx/srx_common.h"
+//#include "srx/srx_common.h"
 #endif
 
 // Forward Declaration
