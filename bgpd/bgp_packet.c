@@ -373,10 +373,12 @@ bgp_update_packet (struct peer *peer, afi_t afi, safi_t safi)
      * only if bgpsec enabled and the from-peer has joined the bgpsec
      * or in case of sending ecommunity string to its peer
      */
+#if defined (TEST_UNPACKING)
     if (   (CHECK_FLAG (peer->flags, PEER_FLAG_BGPSEC_CAPABILITY_SEND)
             && CHECK_FLAG (peer->cap, PEER_CAP_BGPSEC_ADV))
         || ((CHECK_FLAG (peer->bgp->srx_ecommunity_flags, SRX_BGP_FLAG_ECOMMUNITY))
             && bFrag && from))
+#endif
     {
 // @NOTE: This will be redone in the next run through.
       if (bDoNotFrag)
