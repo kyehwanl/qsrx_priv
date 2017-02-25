@@ -90,11 +90,13 @@ unsigned int bgpsec_path_attr_key_make (void *p)
   struct SigSegment *ss;
   unsigned int key = 0;
 
+#if 0
   if (BGP_DEBUG (bgpsec, BGPSEC_DETAIL))
   {
     zlog_debug("[BGPSEC] [%s]: bpa:%p, seg:%p, sb:%p sigSeg:%p AS:%d ", \
         __FUNCTION__, bpa, seg, sb, sb->sigSegments, seg->as);
   }
+#endif
 
   if (sb)
   {
@@ -121,11 +123,13 @@ unsigned int bgpsec_path_attr_key_make (void *p)
     key += jhash(bpa->sigBlocks, 4, 0);
   }
 
+#if 0
   if (BGP_DEBUG (bgpsec, BGPSEC_DETAIL))
   {
     zlog_debug("[BGPSEC] [%s]:  - - key = =:%d, index:%d", \
         __FUNCTION__, key, key % 32767);
   }
+#endif
   return key;
 }
 
@@ -455,10 +459,12 @@ struct BgpsecPathAttr *bgpsec_path_intern (struct BgpsecPathAttr *bpa)
   /* Check bgpsec path attr hash. */
   find = hash_get (bgpsechash, bpa, bgpsec_path_hash_alloc);
 
+#if 0
 #ifdef DEBUG_TEST
   if (BGP_DEBUG (bgpsec, BGPSEC_DETAIL))
     zlog_debug("[BGPSEC]  [%s]: find: %p (refcnt:%ld) Vs bpa: %p",\
         __FUNCTION__, find, find->refcnt, bpa);
+#endif
 #endif
 
   if (find != bpa)
