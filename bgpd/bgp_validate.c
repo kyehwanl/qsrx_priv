@@ -40,11 +40,19 @@ static void * bgpsec_path_hash_alloc (void *arg);
 /* If two aspath have same value then return 1 else return 0 */
 int bgpsec_path_attr_cmp (const void *arg1, const void *arg2)
 {
+  if (arg1 == arg2)
+    return 1;
+  if (arg1 == NULL && arg2 == NULL)
+    return 1;
+
   const struct PathSegment *seg1 = ((const struct BgpsecPathAttr *)arg1)->pathSegments;
   const struct PathSegment *seg2 = ((const struct BgpsecPathAttr *)arg2)->pathSegments;
 
   const struct SigBlock *sb1 = ((const struct BgpsecPathAttr *)arg1)->sigBlocks;
   const struct SigBlock *sb2 = ((const struct BgpsecPathAttr *)arg2)->sigBlocks;
+
+  const struct SigSegment *ss1;
+  const struct SigSegment *ss2;
 
   while (seg1 || seg2)
     {
@@ -68,12 +76,25 @@ int bgpsec_path_attr_cmp (const void *arg1, const void *arg2)
         return 0;
       if (sb1->algoSuiteId != sb2->algoSuiteId)
         return 0;
-      /* TODO: need to have more better comparing  using SKI and signature
-       * not only using sigSegments
-       * Because comparing sigSegemts are just address comparing, so it need to compare more
-       * concrete data like sigSegments->ski, ski_leng and signature */
-      if (sb1->sigSegments != sb2->sigSegments)
+
+      ss1 = sb1->sigSegments;
+      ss2 = sb2->sigSegments;
+
+      while(ss1 || ss2)
+      {
+        if ((!ss1  && ss2) || (ss1 && !ss2))
           return 0;
+        if (memcmp(ss1->ski, ss2->ski, BGPSEC_SKI_LENGTH) != 0)
+          return 0;
+        if (ss1->sigLen != ss2->sigLen)
+          return 0;
+        if (memcmp(ss1->signature, ss2->signature, ss1->sigLen) != 0)
+          return 0;
+
+        ss1 = ss1->next;
+        ss2 = ss2->next;
+      }
+
       sb1 = sb1->next;
       sb2 = sb2->next;
     }

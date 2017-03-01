@@ -455,7 +455,7 @@ attrhash_cmp (const void *p1, const void *p2)
       && attr1->community == attr2->community
       && attr1->med == attr2->med
 #ifdef USE_SRX
-      && attr1->bgpsecPathAttr == attr2->bgpsecPathAttr
+      && (bgpsec_path_attr_cmp (attr1->bgpsecPathAttr, attr2->bgpsecPathAttr))
 #endif
       && attr1->local_pref == attr2->local_pref)
     {
@@ -732,12 +732,24 @@ bgp_attr_unintern_sub (struct attr *attr)
 #ifdef USE_SRX__
   if (attr->bgpsecPathAttr && (attr->flag & ATTR_FLAG_BIT (BGP_ATTR_BGPSEC)) )
   {
+    UNSET_FLAG(attr->flag, BGP_ATTR_BGPSEC);
+
     struct BgpsecPathAttr *bpa = attr->bgpsecPathAttr;
     if(bpa)
     {
-      if(bpa->pathSegments && bpa->sigBlocks)
-        if(bpa->sigBlocks->sigSegments)
-          bgpsec_path_unintern(&bpa);
+      /*
+      if (bpa->refcnt)
+      {
+        if(bpa->pathSegments && bpa->sigBlocks)
+          if(bpa->sigBlocks->sigSegments)
+            bgpsec_path_unintern(&bpa);
+      }
+      else
+      */
+      {
+        bgpsec_path_free (bpa);
+        attr->bgpsecPathAttr = bpa = NULL;
+      }
     }
   }
 #endif
@@ -2038,6 +2050,9 @@ static bgp_attr_parse_ret_t bgp_attr_bgpsec(struct bgp_attr_parser_args *args)
   attr->aspath = srx_convert_to_aspath(attr, peer);
   /* Add the aspath attribute flag. */
   attr->flag |= ATTR_FLAG_BIT (BGP_ATTR_AS_PATH);
+
+  // set bgpsec Attribute flag
+  attr->flag |= ATTR_FLAG_BIT (BGP_ATTR_BGPSEC);
 
   return BGP_ATTR_PARSE_PROCEED;
 }

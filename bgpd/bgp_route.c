@@ -897,7 +897,7 @@ int checkEcomSRxValid(struct attr* attr)
  *
  * In case if one result ROA / BGPSEC is UNDEFINED the update will by default be
  * ignored.
- * 
+ *
  * Also the update will only be put back into the queue if the ignore state
  * changed or the validation result changed.
  */
@@ -914,7 +914,7 @@ void bgp_info_set_validation_result (struct bgp_info *info,
   {
     struct bgp *bgp   = info->peer->bgp;
     int requeue       = 0;
-    
+
     // First store the current status
     uint8_t oldResult = srx_calc_validation_state(bgp, info);
     uint8_t oldIgnore = CHECK_FLAG (info->flags, BGP_INFO_IGNORE) ? 1 : 0;
@@ -933,7 +933,7 @@ void bgp_info_set_validation_result (struct bgp_info *info,
     // ignored
     bool ignoreChanged = bgp_info_set_ignore_flag(info) != oldIgnore;
     bool resultChanged = oldResult != srx_calc_validation_state(bgp, info);
-    
+
     // Only re-queue if the ignore state changed or if the result changed.
     requeue = ignoreChanged || resultChanged;
 
@@ -2835,7 +2835,7 @@ static BGPSecData* srx_create_bgpsec_data (struct bgp_info* info)
     // written in the oas value.
     pathSeg = attr->aspath->segments;
     int prevSize = 0;
-    
+
     while (pathSeg != NULL)
     {
       if (pathSeg->type == AS_SEQUENCE)
@@ -2851,7 +2851,7 @@ static BGPSecData* srx_create_bgpsec_data (struct bgp_info* info)
         {
           bgpsec->asPath = realloc(bgpsec->asPath, size+prevSize);
         }
-        
+
         // Fill array
         for (segIdx = 0;segIdx < pathSeg->length; segIdx++)
         {
@@ -2862,12 +2862,12 @@ static BGPSecData* srx_create_bgpsec_data (struct bgp_info* info)
       pathSeg = pathSeg->next;
     }
   }
-  
+
   // Now Fill the BGPSEC Path Attribtue if it exists
   if (attr->bgpsec_validationData != NULL)
   {
     SCA_BGP_PathAttribute* pa = (SCA_BGP_PathAttribute*)attr->bgpsec_validationData->bgpsec_path_attr;
-    int size = (pa->flags & BGP_UPD_A_FLAGS_EXT_LENGTH) > 0 
+    int size = (pa->flags & BGP_UPD_A_FLAGS_EXT_LENGTH) > 0
                ? ntohs(((SCA_BGPSEC_ExtPathAttribute*)pa)->attrLength)
                : ((SCA_BGPSEC_NormPathAttribute*)pa)->attrLength;
     if (bgpsec->bgpsec_path_attr == NULL)
@@ -2879,7 +2879,7 @@ static BGPSecData* srx_create_bgpsec_data (struct bgp_info* info)
       bgpsec->bgpsec_path_attr = realloc(bgpsec->bgpsec_path_attr, size);
     }
     bgpsec->attr_length = size;
-    memcpy(bgpsec->bgpsec_path_attr, attr->bgpsec_validationData->bgpsec_path_attr, 
+    memcpy(bgpsec->bgpsec_path_attr, attr->bgpsec_validationData->bgpsec_path_attr,
           size);
   }
 
@@ -3028,7 +3028,7 @@ void verify_update (struct bgp *bgp, struct bgp_info *info,
       free(prefix);
     }
   }
-  // @TODO: Here is the point where we could call validate if we do not have any 
+  // @TODO: Here is the point where we could call validate if we do not have any
   //        connection to the SRx server and we plan to do local validation.
   //        If not, no path validation will be performed - period.
   // else { DO PATH VALIDATION }
@@ -3195,6 +3195,13 @@ bgp_update_main (struct peer *peer, struct prefix *p, struct attr *attr,
 	    }
 
 	  bgp_unlock_node (rn);
+#ifdef USE_SRX
+          if (attr_new->bgpsecPathAttr && (attr_new->flag & ATTR_FLAG_BIT (BGP_ATTR_BGPSEC)) )
+          {
+            UNSET_FLAG(attr_new->flag, BGP_ATTR_BGPSEC);
+            bgpsec_path_free (attr_new->bgpsecPathAttr);
+          }
+#endif
 	  bgp_attr_unintern (&attr_new);
 
 	  return 0;
@@ -3405,7 +3412,7 @@ bgp_update_main (struct peer *peer, struct prefix *p, struct attr *attr,
   defRes->resSourceBGPSEC     = SRxRS_ROUTER;
   defRes->result.roaResult    = bgp->srx_default_roaVal;
   defRes->result.bgpsecResult = bgp->srx_default_bgpsecVal;
-  
+
   verify_update (bgp, new, defRes, true);
   free(defRes);
 #endif /* USE_SRX */
