@@ -2401,6 +2401,9 @@ void handleSRxMessages(SRxProxyCommCode mainCode, int subCode, void* userPtr)
  * validation state or in case the update is not known, respond with a delete to
  * the srx server.
  */
+#if defined (__TIME_MEASURE__)
+#include "libtm_rdtsc.h"
+#endif /* __TIME_MEASURE__ */
 bool handleSRxValidationResult (SRxUpdateID updateID, uint32_t localID,
                                 ValidationResultType valType,
                                 uint8_t roaResult, uint8_t bgpsecResult,
@@ -2410,6 +2413,12 @@ bool handleSRxValidationResult (SRxUpdateID updateID, uint32_t localID,
   struct bgp*      bgp   = (struct bgp*)bgpRouter;
 
   bool retVal = false;
+
+#if defined (__TIME_MEASURE__)
+  static unsigned int valCount=0;
+  extern unsigned int g_measureCount;
+  unsigned long long val_end_clock;
+#endif /* __TIME_MEASURE__ */
 
   if (localID != 0) // update & requestToken substitution
   {
@@ -2438,11 +2447,30 @@ bool handleSRxValidationResult (SRxUpdateID updateID, uint32_t localID,
       //------ To be deleted later on-----------
       if (bgp->srxCAPI != NULL && info->attr->bgpsec_validationData != NULL)
       {
+#if defined (__TIME_MEASURE__)
+        if(valCount == 0)
+        {
+          clk_t0 = rdtsc();
+        }
+#endif /* __TIME_MEASURE__ */
         // Now CAPI validation result and the SRx Validation result are different
         // values. We need to adjust them.
         int valResult = bgp->srxCAPI->validate(info->attr->bgpsec_validationData);
         bgpsecResult = valResult == API_VALRESULT_VALID ? SRx_RESULT_VALID
                                                         : SRx_RESULT_INVALID;
+#if defined (__TIME_MEASURE__)
+        valCount++;
+        if(valCount >= g_measureCount)
+        {
+          val_end_clock = rdtsc();
+          printf(" validate count reached %ld and terminate \n", g_measureCount);
+          valCount =0;
+          //exit(0);
+          print_clock_time(end_clock, start_clock,      "Receiving time");
+          print_clock_time(val_end_clock , clk_t0,      "validation time :");
+          print_clock_time(val_end_clock , start_clock, "overall time (including validation) :");
+        }
+#endif /* __TIME_MEASURE__ */
 
         if (bgpsecResult == SRx_RESULT_INVALID)
         {
