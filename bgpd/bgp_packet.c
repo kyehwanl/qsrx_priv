@@ -2799,7 +2799,7 @@ bgp_read (struct thread *thread)
       if(tCount >= g_measureCount && g_measureCount != 0)
       {
         end_clock = rdtsc();
-        print_clock_time(end_clock, start_clock, "receive test");
+        //print_clock_time(end_clock, start_clock, "receive test");
         tCount=0;
       }
 #endif /* __TIME_MEASURE__ */

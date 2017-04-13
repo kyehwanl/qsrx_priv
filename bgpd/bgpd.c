@@ -2401,6 +2401,9 @@ void handleSRxMessages(SRxProxyCommCode mainCode, int subCode, void* userPtr)
  * validation state or in case the update is not known, respond with a delete to
  * the srx server.
  */
+#if defined (__TIME_MEASURE__)
+#include "libtm_rdtsc.h"
+#endif /* __TIME_MEASURE__ */
 bool handleSRxValidationResult (SRxUpdateID updateID, uint32_t localID,
                                 ValidationResultType valType,
                                 uint8_t roaResult, uint8_t bgpsecResult,
@@ -2410,6 +2413,12 @@ bool handleSRxValidationResult (SRxUpdateID updateID, uint32_t localID,
   struct bgp*      bgp   = (struct bgp*)bgpRouter;
 
   bool retVal = false;
+
+#if defined (__TIME_MEASURE__)
+  static unsigned int valCount=0;
+  extern unsigned int g_measureCount;
+  unsigned long long val_end_clock;
+#endif /* __TIME_MEASURE__ */
 
   if (localID != 0) // update & requestToken substitution
   {
@@ -2456,12 +2465,20 @@ bool handleSRxValidationResult (SRxUpdateID updateID, uint32_t localID,
       }
 #endif /* DISTRIBUTED_EVALUATION*/
 
+
       bgp_info_set_validation_result (info, valType, roaResult, bgpsecResult);
       retVal = true;
+
     }
   }
   else // it is an update
   {
+#if defined (__TIME_MEASURE__)
+    if(valCount == 0)
+    {
+      clk_t0 = rdtsc();
+    }
+#endif /* __TIME_MEASURE__ */
     // Retrieve the Update by using the update ID.
     info = bgp_info_fetch(bgp->info_uid_hash, updateID);
     if (info)
@@ -2470,6 +2487,21 @@ bool handleSRxValidationResult (SRxUpdateID updateID, uint32_t localID,
       bgp_info_set_validation_result (info, valType, roaResult, bgpsecResult);
       retVal = true;
     }
+
+
+#if defined (__TIME_MEASURE__)
+    valCount++;
+    if(valCount >= g_measureCount)
+    {
+      val_end_clock = rdtsc();
+      printf(" validate count reached %ld and terminate \n", g_measureCount);
+      valCount =0;
+      //exit(0);
+      print_clock_time(end_clock, start_clock,      "Receiving time");
+      print_clock_time(val_end_clock , clk_t0,      "validation time :");
+      print_clock_time(val_end_clock , start_clock, "overall time (including validation) :");
+    }
+#endif /* __TIME_MEASURE__ */
   }
 
   if (!retVal)
