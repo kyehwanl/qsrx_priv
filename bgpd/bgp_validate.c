@@ -928,8 +928,15 @@ SCA_Signature* signBGPSecPathAttr(struct bgp* bgp, struct peer* peer,
   // Get the hash Message, if it was received and already validated, the
   // hashMessage will not be NULL. If it is null, the signature algorithm
   // assumes it is an origination.
-  scaSignData.hashMessage = attr->bgpsec_validationData->hashMessage[BLOCK_0];
   scaSignData.signature   = NULL;
+#if defined (DISTRIBUTED_EVALUATION)
+  /* hash message for Distribution version */
+  if (!tmpData) // in case, only if not origin for now
+    sca_generateHashMessage(attr->bgpsec_validationData,
+        SCA_ECDSA_ALGORITHM, &attr->bgpsec_validationData->status);
+#endif /* DISTRIBUTED_EVALUATION*/
+  scaSignData.hashMessage = attr->bgpsec_validationData->hashMessage[BLOCK_0];
+
 
   // Now do the signing. If it fails, cleanup what needs to be clean up
   // and return 0
@@ -952,6 +959,7 @@ SCA_Signature* signBGPSecPathAttr(struct bgp* bgp, struct peer* peer,
     return 0;
   }
 
+#if !defined (DISTRIBUTED_EVALUATION)
   if (attr->bgpsec_validationData->hashMessage[BLOCK_0] != scaSignData.hashMessage)
   {
     if (attr->bgpsec_validationData->hashMessage[BLOCK_0] != NULL)
@@ -973,6 +981,7 @@ SCA_Signature* signBGPSecPathAttr(struct bgp* bgp, struct peer* peer,
       freeSCA_HashMessage(scaSignData.hashMessage);
     }
   }
+#endif /* DISTRIBUTED_EVALUATION*/
 
   if (tmpData)
   {

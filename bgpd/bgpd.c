@@ -2436,6 +2436,7 @@ bool handleSRxValidationResult (SRxUpdateID updateID, uint32_t localID,
       // in case no srx-server is available.
 
       //------ To be deleted later on-----------
+#if !defined (DISTRIBUTED_EVALUATION)
       if (bgp->srxCAPI != NULL && info->attr->bgpsec_validationData != NULL)
       {
         // Now CAPI validation result and the SRx Validation result are different
@@ -2453,6 +2454,7 @@ bool handleSRxValidationResult (SRxUpdateID updateID, uint32_t localID,
           }
         }
       }
+#endif /* DISTRIBUTED_EVALUATION*/
 
       bgp_info_set_validation_result (info, valType, roaResult, bgpsecResult);
       retVal = true;

@@ -343,6 +343,14 @@ AC_ARG_ENABLE(srxcryptoapi,
               [  --disable-srxcryptoapi        disable srxcryptoapi integration], 
               [] [enable_srxcryptoapi="yes"])
 
+AC_ARG_ENABLE(disteval,
+    AC_HELP_STRING([--disable-disteval], [disable to use Distributed Evaluation feature]),
+              [], [enable_disteval="yes"])
+
+if test x"${enable_disteval}" = x"yes"; then
+  AC_DEFINE(DISTRIBUTED_EVALUATION,,Distributed Evaluation)
+fi
+
 if test x"${enable_srx}" != x"yes" ; then
   if test x"${enable_srxcryptoapi}" = x"yes" ; then
     AC_MSG_ERROR([--enable-srxcryptoapi not possible with --disable-srx !!])

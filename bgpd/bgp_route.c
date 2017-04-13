@@ -2870,6 +2870,9 @@ static BGPSecData* srx_create_bgpsec_data (struct bgp_info* info)
     int size = (pa->flags & BGP_UPD_A_FLAGS_EXT_LENGTH) > 0
                ? ntohs(((SCA_BGPSEC_ExtPathAttribute*)pa)->attrLength)
                : ((SCA_BGPSEC_NormPathAttribute*)pa)->attrLength;
+#if defined (DISTRIBUTED_EVALUATION)
+    size += 4; // add flag, type, attribute length itself
+#endif
     if (bgpsec->bgpsec_path_attr == NULL)
     {
       bgpsec->bgpsec_path_attr = malloc(size);
@@ -2879,6 +2882,11 @@ static BGPSecData* srx_create_bgpsec_data (struct bgp_info* info)
       bgpsec->bgpsec_path_attr = realloc(bgpsec->bgpsec_path_attr, size);
     }
     bgpsec->attr_length = size;
+#if defined (DISTRIBUTED_EVALUATION)
+    bgpsec->afi  = ((SCA_Prefix*)attr->bgpsec_validationData->nlri)->afi;
+    bgpsec->safi = ((SCA_Prefix*)attr->bgpsec_validationData->nlri)->safi;
+    bgpsec->local_as = info->peer->local_as;
+#endif
     memcpy(bgpsec->bgpsec_path_attr, attr->bgpsec_validationData->bgpsec_path_attr,
           size);
   }
