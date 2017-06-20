@@ -181,8 +181,6 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 
 // POLICY
 #define SRX_VTY_HLP_POLICY      "Evaluation policy command\n"
-#define SRX_VTY_HLP_POLICY_ROA  "Prefix-origin validation using ROA's\n"
-#define SRX_VTY_HLP_POLICY_PATH "Path validation (NOT IMPLEMENTED YET)\n"
 #define SRX_VTY_HLP_ORIGIN_ONLY "(" SRX_VTY_EVAL_ORIGIN_ONLY ") "
 
 // POLICY IGNORE NOTFOUND / INVALID
@@ -742,7 +740,7 @@ struct peer
 #define PEER_CAP_AS4_ADV                    (1 << 7) /* as4 advertised */
 #define PEER_CAP_AS4_RCV                    (1 << 8) /* as4 received */
 #ifdef USE_SRX
-#define PEER_CAP_EXTENDED_MSG_SUPPORT       (1 << 13)/* bgpsec advertised send capability */
+#define PEER_CAP_EXTENDED_MSG_SUPPORT       (1 << 13)/* extended message support*/
 #define PEER_CAP_BGPSEC_ADV_SEND            (1 << 14)/* bgpsec advertised send capability */
 #define PEER_CAP_BGPSEC_ADV                 (1 << 15)/* bgpsec advertised recv capability */
 #endif

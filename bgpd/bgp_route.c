@@ -2803,7 +2803,7 @@ static void prefix_to_IPPrefix (struct prefix* src, IPPrefix* dst)
 {
   dst->length = src->prefixlen;
 
-#ifdef HAVE_UPV6
+#ifdef HAVE_IPV6
   dst->ip.version = GET_VERSION_OF_AF (src->family);
   memcpy (&dst->ip.addr, &src->u, 16);
 #else

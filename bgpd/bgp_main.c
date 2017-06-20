@@ -49,9 +49,6 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 #include "bgpd/bgp_debug.h"
 #include "bgpd/bgp_filter.h"
 #include "bgpd/bgp_zebra.h"
-#if defined (__TIME_MEASURE__)
-#include "libtm_rdtsc.h"
-#endif /* __TIME_MEASURE__ */
 
 /* bgpd options, we use GNU getopt library. */
 static const struct option longopts[] =
@@ -120,10 +117,6 @@ static const char *pid_file = PATH_BGPD_PID;
 int vty_port = BGP_VTY_PORT;
 char *vty_addr = NULL;
 
-#if defined (__TIME_MEASURE__)
-unsigned int g_measureCount=0;
-#endif /* __TIME_MEASURE__ */
-
 /* privileges */
 static zebra_capabilities_t _caps_p [] =
 {
@@ -171,7 +164,6 @@ redistribution between different routing protocols.\n\n\
 -g, --group        Group to run as\n\
 -v, --version      Print program version\n\
 -C, --dryrun       Check configuration for validity and exit\n\
--c,                Time Measuring count\n\
 -h, --help         Display this help and exit\n\
 \n\
 Report bugs to %s\n", progname, ZEBRA_BUG_ADDRESS);
@@ -348,18 +340,10 @@ main (int argc, char **argv)
   /* BGP master init. */
   bgp_master_init ();
 
-#if defined (__TIME_MEASURE__)
-  tm_rdtsc_init(); // initialize time measure library
-#endif /* __TIME_MEASURE__ */
-
   /* Command line argument treatment. */
   while (1)
     {
-#if defined (__TIME_MEASURE__)
-      opt = getopt_long (argc, argv, "df:i:z:hp:l:A:P:rnu:g:vCc:", longopts, 0);
-#else
       opt = getopt_long (argc, argv, "df:i:z:hp:l:A:P:rnu:g:vC", longopts, 0);
-#endif /* __TIME_MEASURE__ */
 
       if (opt == EOF)
 	break;
@@ -424,12 +408,6 @@ main (int argc, char **argv)
 	case 'C':
 	  dryrun = 1;
 	  break;
-#if defined (__TIME_MEASURE__)
-        case 'c':
-          g_measureCount = atoi(optarg);
-          printf("[%s] Time Measuring Count: %ld\n", __FUNCTION__, g_measureCount);
-          break;
-#endif /* __TIME_MEASURE__ */
 	case 'h':
 	  usage (progname, 0);
 	  break;

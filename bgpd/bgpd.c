@@ -66,9 +66,6 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 #include "bgpd/bgp_info_hash.h"
 #include "bgpd/bgp_validate.h"
 
-#if defined(__TIME_MEASURE__)
-//#include "srx/srx_common.h"
-#endif
 
 // Forward Declaration
 bool handleSRxValidationResult (SRxUpdateID updateID, uint32_t localID,
@@ -5624,6 +5621,19 @@ bgp_config_write_peer (struct vty *vty, struct bgp *bgp,
         vty_out (vty, " neighbor %s bgpsec snd %s", addr, VTY_NEWLINE);
       else if (CHECK_FLAG (peer->flags, PEER_FLAG_BGPSEC_CAPABILITY_RECV))
 	vty_out (vty, " neighbor %s bgpsec rec %s", addr, VTY_NEWLINE);
+
+      /* Extended message capability*/
+      if (CHECK_FLAG (peer->flags, PEER_FLAG_EXTENDED_MESSAGE_SUPPORT))
+      {
+        vty_out (vty, " neighbor %s capability extended%s", addr,
+                 VTY_NEWLINE);
+      }
+      /* Extended message capability liberal processing*/
+      if (CHECK_FLAG (peer->flags, PEER_FLAG_EXTENDED_MESSAGE_LIBERAL))
+      {
+        vty_out (vty, " neighbor %s capability extended liberal%s", addr,
+                 VTY_NEWLINE);
+      }
 #endif /* USE_SRX */
 
       /* override capability negotiation. */
@@ -6120,9 +6130,10 @@ bgp_config_write (struct vty *vty)
         }
         if (kIdx == 0)
         {
-          vty_out (vty, "! The following form is deprecated.", VTY_NEWLINE);
+          vty_out (vty, "! The following form is deprecated.%s", VTY_NEWLINE);
           vty_out (vty, "! bgpsec ski %s%s", skiStr, VTY_NEWLINE);
         }
+        // BZ1055 fixed syntax of command. ...ski1 to ...ski 1
         vty_out (vty, " srx bgpsec ski%u %s%s", kIdx, skiStr, VTY_NEWLINE);
       }
       vty_out (vty, " srx bgpsec active-ski %u%s", bgp->srx_bgpsec_active_key,
