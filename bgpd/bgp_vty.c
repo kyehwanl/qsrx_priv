@@ -1987,6 +1987,28 @@ DEFUN (srx_evaluation,
   return CMD_SUCCESS;
 }
 
+
+DEFUN (srx_evaluation_bgpsec_distribute,
+       srx_evaluation_bgpsec_distribute_cmd,
+       SRX_VTY_CMD_EVALUATE ".LINE",
+       SRX_VTY_HLP_EVALUATE)
+{
+
+  struct bgp* bgp;
+  bgp = vty->index;
+  int mode;
+
+  if (strncmp(argv[0], SRX_VTY_EVAL_BGPSEC, 1) == 0 && argv[1])
+  {
+    if (strncmp(argv[1], "distribution", 4) == 0)
+    {
+      mode = SRX_CONFIG_EVAL_DISTR;
+      bgp_srx_evaluation(bgp, mode);
+    }
+  }
+}
+
+
 // Configuration of default validation results
 DEFUN (srx_conf_default_roa_result_valid,
        srx_conf_default_roa_result_valid_cmd,
@@ -3033,14 +3055,14 @@ DEFUN (neighbor_bgpsec_mpnlri_ipv4,
   return CMD_WARNING;
 }
 
-/** 
+/**
  * Resize the buffer for this peer according to the current needs
- * 
+ *
  * @param peer The peer structure
  * @param newsize The new bugffer size.
  */
 static void __resizeBuffer(struct peer *peer, size_t newsize)
-  {
+{
   size_t oldsize;
     if(peer->ibuf)
     {
@@ -3073,7 +3095,7 @@ static int _setExtendedMessageSupport(struct vty *vty, const char* ip, bool enab
   {
     if (!peer->established)
     {
-      __resizeBuffer(peer, enable ? BGP_MAX_PACKET_SIZE_EXTENDED 
+      __resizeBuffer(peer, enable ? BGP_MAX_PACKET_SIZE_EXTENDED
                                     : BGP_MAX_PACKET_SIZE);
       if (enable)
       {
@@ -3081,7 +3103,7 @@ static int _setExtendedMessageSupport(struct vty *vty, const char* ip, bool enab
     }
       else
     {
-        retVal = peer_flag_unset_vty (vty, ip, PEER_FLAG_EXTENDED_MESSAGE_SUPPORT);      
+        retVal = peer_flag_unset_vty (vty, ip, PEER_FLAG_EXTENDED_MESSAGE_SUPPORT);
       }
       if (retVal == CMD_SUCCESS)
       {
@@ -3099,16 +3121,16 @@ static int _setExtendedMessageSupport(struct vty *vty, const char* ip, bool enab
     }
   }
 
-  if (msg1 != NULL) 
-  { 
+  if (msg1 != NULL)
+  {
     //zlog_info ("%s %s", msg1, VTY_NEWLINE);
-    vty_out (vty, "%s %s", msg1, VTY_NEWLINE); 
-}
+    vty_out (vty, "%s %s", msg1, VTY_NEWLINE);
+  }
 
   return retVal;
 }
 
-/** 
+/**
  * Enable or disable the extended message liberal behavior. This can be done
  * in live operation.
  */
@@ -3122,7 +3144,7 @@ static int _setExtendedMessageLiberal(struct vty *vty, const char* ip, bool enab
   if (peer)
   {
     retVal = peer_flag_set_vty(vty, ip, PEER_FLAG_EXTENDED_MESSAGE_LIBERAL);
-    
+
     if (retVal == CMD_SUCCESS)
     {
       if (!enable)
@@ -3142,28 +3164,28 @@ static int _setExtendedMessageLiberal(struct vty *vty, const char* ip, bool enab
       else
       {
         msg1 = "Enabled extended message liberal policy";
-        __resizeBuffer(peer, BGP_MAX_PACKET_SIZE_EXTENDED);      
+        __resizeBuffer(peer, BGP_MAX_PACKET_SIZE_EXTENDED);
       }
     }
     else
     {
       msg1 = "Error modifying liberal policy flag!";
     }
-            
+
   }
 
-  if (msg1 != NULL) 
-  { 
+  if (msg1 != NULL)
+  {
     //zlog_info ("%s %s", msg1, VTY_NEWLINE);
-    vty_out (vty, "%s %s", msg1, VTY_NEWLINE); 
+    vty_out (vty, "%s %s", msg1, VTY_NEWLINE);
   }
-  if (msg2 != NULL) 
-  { 
+  if (msg2 != NULL)
+  {
     //zlog_info ("%s %s", msg2, VTY_NEWLINE);
-    vty_out (vty, "%s %s", msg2, VTY_NEWLINE); 
-}
+    vty_out (vty, "%s %s", msg2, VTY_NEWLINE);
+  }
 
-  return retVal;  
+  return retVal;
 }
 
 /* BGP Extended Message Support */
@@ -3186,9 +3208,9 @@ DEFUN (no_neighbor_capability_extended_message_support,
        NEIGHBOR_ADDR_STR2
        "Do not advertise capability to the peer\n"
        "Disable extended message support to the neighbor\n")
-    {
+{
   return _setExtendedMessageSupport(vty, argv[0], false);
-  }
+}
 
 
 /* extended message support for bgp (optional) */
@@ -10474,6 +10496,9 @@ bgp_vty_init (void)
 
   install_element (BGP_NODE, &srx_evaluation_cmd);
   install_element (BGP_NODE, &no_srx_evaluation_cmd);
+  install_element (BGP_NODE, &srx_evaluation_bgpsec_distribute_cmd);
+  //install_element (BGP_NODE, &no_srx_evaluation_bgpsec_distribute_cmd);
+
 
 // NOT IN THIS VERSION
 //  install_element (BGP_NODE, &srx_apply_policy_cmd);

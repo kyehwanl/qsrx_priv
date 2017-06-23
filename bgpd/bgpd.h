@@ -418,6 +418,7 @@ struct bgp
 #define SRX_CONFIG_EVALUATE      (SRX_CONFIG_EVAL_ORIGIN | SRX_CONFIG_EVAL_PATH)
 
 #define SRX_CONFIG_DISPLAY_INFO  (1 << 3)
+#define SRX_CONFIG_EVAL_DISTR    (1 << 4)
 #endif /* USE_SRX */
 
   /* BGP router identifier.  */

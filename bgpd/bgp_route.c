@@ -2819,7 +2819,7 @@ static void prefix_to_IPPrefix (struct prefix* src, IPPrefix* dst)
  * @param info The bgp update
  * @param bgpsec The data object to be filled.
  */
-static BGPSecData* srx_create_bgpsec_data (struct bgp_info* info)
+static BGPSecData* srx_create_bgpsec_data (struct bgp *bgp, struct bgp_info* info)
 {
   struct attr* attr = info->attr;
   struct assegment* pathSeg;
@@ -2870,9 +2870,10 @@ static BGPSecData* srx_create_bgpsec_data (struct bgp_info* info)
     int size = (pa->flags & BGP_UPD_A_FLAGS_EXT_LENGTH) > 0
                ? ntohs(((SCA_BGPSEC_ExtPathAttribute*)pa)->attrLength)
                : ((SCA_BGPSEC_NormPathAttribute*)pa)->attrLength;
-#if defined (DISTRIBUTED_EVALUATION)
-    size += 4; // add flag, type, attribute length itself
-#endif
+    if ( CHECK_FLAG(bgp->srx_config, SRX_CONFIG_EVAL_DISTR))
+    {
+      size += 4; // add flag, type, attribute length itself
+    }
     if (bgpsec->bgpsec_path_attr == NULL)
     {
       bgpsec->bgpsec_path_attr = malloc(size);
@@ -2882,11 +2883,12 @@ static BGPSecData* srx_create_bgpsec_data (struct bgp_info* info)
       bgpsec->bgpsec_path_attr = realloc(bgpsec->bgpsec_path_attr, size);
     }
     bgpsec->attr_length = size;
-#if defined (DISTRIBUTED_EVALUATION)
-    bgpsec->afi  = ((SCA_Prefix*)attr->bgpsec_validationData->nlri)->afi;
-    bgpsec->safi = ((SCA_Prefix*)attr->bgpsec_validationData->nlri)->safi;
-    bgpsec->local_as = info->peer->local_as;
-#endif
+    if ( CHECK_FLAG(bgp->srx_config, SRX_CONFIG_EVAL_DISTR))
+    {
+      bgpsec->afi  = ((SCA_Prefix*)attr->bgpsec_validationData->nlri)->afi;
+      bgpsec->safi = ((SCA_Prefix*)attr->bgpsec_validationData->nlri)->safi;
+      bgpsec->local_as = info->peer->local_as;
+    }
     memcpy(bgpsec->bgpsec_path_attr, attr->bgpsec_validationData->bgpsec_path_attr,
           size);
   }
@@ -3027,9 +3029,16 @@ void verify_update (struct bgp *bgp, struct bgp_info *info,
 
       // Generate BGPSEC data currently no data at all, here is a good place
       // to add at least the AS path
-      BGPSecData* bgpsec = srx_create_bgpsec_data(info);
+      BGPSecData* bgpsec = srx_create_bgpsec_data(bgp, info);
 
-      verifyUpdate(bgp->srxProxy, info->localID, true, true, defResult,
+
+      bool usePathVal = false;
+      if ( CHECK_FLAG(bgp->srx_config, SRX_CONFIG_EVAL_DISTR))
+      {
+        usePathVal = true;
+      }
+
+      verifyUpdate(bgp->srxProxy, info->localID, true, usePathVal, defResult,
                    prefix, oas, bgpsec);
 
       srx_free_bgpsec_data(bgpsec);

@@ -633,6 +633,11 @@ int srx_connect_proxy(struct bgp *bgp)
                                       g_rq, clientFD);
       bgp->srx_proxyID = bgp->srxProxy->proxyID;
       zlog_info ("Connect to SRx server %s:%d", bgp->srx_host, bgp->srx_port);
+
+      if ( CHECK_FLAG(bgp->srx_config, SRX_CONFIG_EVAL_DISTR))
+      {
+        zlog_info ("\033[92m""Enabled Distributed Evaluation on SRx server""\033[0m" );
+      }
     }
     else
     {
@@ -785,6 +790,9 @@ int bgp_srx_evaluation (struct bgp *bgp, int mode)
     case SRX_CONFIG_EVAL_ORIGIN:
       srx_config_set (bgp, SRX_CONFIG_EVAL_ORIGIN);
       srx_config_unset (bgp, SRX_CONFIG_EVAL_PATH);
+      break;
+    case SRX_CONFIG_EVAL_DISTR:
+      srx_config_set (bgp, SRX_CONFIG_EVAL_DISTR);
       break;
     default:
       zlog_err("Invalid srx evaluation flag %u passed, ignore it!", mode);
@@ -2433,25 +2441,27 @@ bool handleSRxValidationResult (SRxUpdateID updateID, uint32_t localID,
       // in case no srx-server is available.
 
       //------ To be deleted later on-----------
-#if !defined (DISTRIBUTED_EVALUATION)
-      if (bgp->srxCAPI != NULL && info->attr->bgpsec_validationData != NULL)
+      if ( !CHECK_FLAG(bgp->srx_config, SRX_CONFIG_EVAL_DISTR))
       {
-        // Now CAPI validation result and the SRx Validation result are different
-        // values. We need to adjust them.
-        int valResult = bgp->srxCAPI->validate(info->attr->bgpsec_validationData);
-        bgpsecResult = valResult == API_VALRESULT_VALID ? SRx_RESULT_VALID
-                                                        : SRx_RESULT_INVALID;
-
-        if (bgpsecResult == SRx_RESULT_INVALID)
+        if (bgp->srxCAPI != NULL && info->attr->bgpsec_validationData != NULL)
         {
-          if ((info->attr->bgpsec_validationData->status & API_STATUS_ERROR_MASK) > 0)
+          // Now CAPI validation result and the SRx Validation result are different
+          // values. We need to adjust them.
+          int valResult = bgp->srxCAPI->validate(info->attr->bgpsec_validationData);
+          bgpsecResult = valResult == API_VALRESULT_VALID ? SRx_RESULT_VALID
+            : SRx_RESULT_INVALID;
+
+          if (bgpsecResult == SRx_RESULT_INVALID)
           {
-            zlog_err("Update [0x%08X] validation returned invalid with an error: status=0x%X\n",
-                    updateID, info->attr->bgpsec_validationData->status);
+            if ((info->attr->bgpsec_validationData->status & API_STATUS_ERROR_MASK) > 0)
+            {
+              zlog_err("Update [0x%08X] validation returned invalid with an error: status=0x%X\n",
+                  updateID, info->attr->bgpsec_validationData->status);
+            }
           }
         }
+        valType |= VRT_BGPSEC;
       }
-#endif /* DISTRIBUTED_EVALUATION*/
 
       bgp_info_set_validation_result (info, valType, roaResult, bgpsecResult);
       retVal = true;
@@ -6134,7 +6144,7 @@ bgp_config_write (struct vty *vty)
           vty_out (vty, "! bgpsec ski %s%s", skiStr, VTY_NEWLINE);
         }
         // BZ1055 fixed syntax of command. ...ski1 to ...ski 1
-        vty_out (vty, " srx bgpsec ski%u %s%s", kIdx, skiStr, VTY_NEWLINE);
+        vty_out (vty, " srx bgpsec ski %u %s%s", kIdx, skiStr, VTY_NEWLINE);
       }
       vty_out (vty, " srx bgpsec active-ski %u%s", bgp->srx_bgpsec_active_key,
                VTY_NEWLINE);

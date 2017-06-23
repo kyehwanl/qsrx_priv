@@ -157,7 +157,7 @@ void bgpsec_path_attr_init()
   memset (g_capi, 0, sizeof(SRxCryptoAPI));
   sca_status_t sca_status = API_STATUS_OK;
 
-  if(srxCryptoInit(g_capi, &sca_status) == API_FAILURE);
+  if(srxCryptoInit(g_capi, &sca_status) == API_FAILURE)
   {
     zlog_err("[BGPSEC] SRxCryptoAPI not initialized (0x%X)!\n", sca_status);
   }
@@ -908,12 +908,13 @@ SCA_Signature* signBGPSecPathAttr(struct bgp* bgp, struct peer* peer,
   // hashMessage will not be NULL. If it is null, the signature algorithm
   // assumes it is an origination.
   scaSignData.signature   = NULL;
-#if defined (DISTRIBUTED_EVALUATION)
-  /* hash message for Distribution version */
-  if (!tmpData) // in case, only if not origin for now
-    sca_generateHashMessage(attr->bgpsec_validationData,
-        SCA_ECDSA_ALGORITHM, &attr->bgpsec_validationData->status);
-#endif /* DISTRIBUTED_EVALUATION*/
+  if ( CHECK_FLAG(bgp->srx_config, SRX_CONFIG_EVAL_DISTR))
+  {
+    /* hash message for Distribution version */
+    if (!tmpData) // in case, only if not origin for now
+      sca_generateHashMessage(attr->bgpsec_validationData,
+          SCA_ECDSA_ALGORITHM, &attr->bgpsec_validationData->status);
+  }
   scaSignData.hashMessage = attr->bgpsec_validationData->hashMessage[BLOCK_0];
 
 
@@ -938,29 +939,30 @@ SCA_Signature* signBGPSecPathAttr(struct bgp* bgp, struct peer* peer,
     return 0;
   }
 
-#if !defined (DISTRIBUTED_EVALUATION)
-  if (attr->bgpsec_validationData->hashMessage[BLOCK_0] != scaSignData.hashMessage)
+  if ( !CHECK_FLAG(bgp->srx_config, SRX_CONFIG_EVAL_DISTR))
   {
-    if (attr->bgpsec_validationData->hashMessage[BLOCK_0] != NULL)
+    if (attr->bgpsec_validationData->hashMessage[BLOCK_0] != scaSignData.hashMessage)
     {
-      if (!bgp->srxCAPI->freeHashMessage(attr->bgpsec_validationData->hashMessage[BLOCK_0]));
+      if (attr->bgpsec_validationData->hashMessage[BLOCK_0] != NULL)
       {
-        freeSCA_HashMessage(attr->bgpsec_validationData->hashMessage[BLOCK_0]);
+        if (!bgp->srxCAPI->freeHashMessage(attr->bgpsec_validationData->hashMessage[BLOCK_0]));
+        {
+          freeSCA_HashMessage(attr->bgpsec_validationData->hashMessage[BLOCK_0]);
+        }
+        attr->bgpsec_validationData->hashMessage[BLOCK_0] = NULL;
       }
-      attr->bgpsec_validationData->hashMessage[BLOCK_0] = NULL;
-    }
 
-    // Now store the new hash message - only if this is NOT an origin announcement
-    if (!tmpData)
-    {
-      attr->bgpsec_validationData->hashMessage[BLOCK_0] = scaSignData.hashMessage;
-    }
-    else
-    {
-      freeSCA_HashMessage(scaSignData.hashMessage);
+      // Now store the new hash message - only if this is NOT an origin announcement
+      if (!tmpData)
+      {
+        attr->bgpsec_validationData->hashMessage[BLOCK_0] = scaSignData.hashMessage;
+      }
+      else
+      {
+        freeSCA_HashMessage(scaSignData.hashMessage);
+      }
     }
   }
-#endif /* DISTRIBUTED_EVALUATION*/
 
   if (tmpData)
   {
